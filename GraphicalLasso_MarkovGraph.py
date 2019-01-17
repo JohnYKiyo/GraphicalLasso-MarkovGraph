@@ -147,7 +147,7 @@ class MarkovGraph:
         val = pd.DataFrame(pos)[self.names]
         self.embedding = val.values
 
-    def plot(self,facecolor='w',figsize=(10,8),marker_edgecolors='k',marker_cmap='Spectral',line_cmap='Spectral',savefig_name='MarkovGraph.png'):
+    def plot(self,facecolor='w',figsize=(10,8),marker_edgecolors='k',marker_cmap='Spectral',line_cmap='Spectral'):
         fig = plt.figure(1,facecolor=facecolor,figsize=figsize)
         fig.clf()
         ax = fig.add_axes([0,0,1,1])
@@ -191,5 +191,5 @@ class MarkovGraph:
                     self.embedding[0].max() + .10 * self.embedding[0].ptp())
         ax.set_ylim(self.embedding[1].min() - .03 * self.embedding[1].ptp(),
                     self.embedding[1].max() + .03 * self.embedding[1].ptp())
-        fig.savefig(savefig_name)
-
+        
+        return fig,ax
