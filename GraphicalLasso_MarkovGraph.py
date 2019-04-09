@@ -83,11 +83,11 @@ def MinMaxNormalization(X,axis=0):
     elif axis==0:
         Xmax = X.max()
         Xmin = X.min() 
-        return (df - Xmin) / (Xmax - Xmin)
+        return (X - Xmin) / (Xmax - Xmin)
     elif axis==1:
         Xmax = X.T.max()
         Xmin = X.T.min()
-        return ((df.T - Xmin) /(Xmax - Xmin)).T
+        return ((X.T - Xmin) /(Xmax - Xmin)).T
     else:
         print('IndexError: tuple index out of range')
         
