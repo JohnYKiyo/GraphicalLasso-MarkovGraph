@@ -115,9 +115,8 @@ class MarkovGraph:
         self.names = X.columns.values
         self.X = X
         self.model = model
-        self.non_zero_threshold = 0.02
         self.cluster = self.affinity_propagation(X=X,model=model,vervose=vervose)
-        self.embedding,self.diag,self.partialcorr,self.non_zero_matrix,self.non_zero_threshold = self.LocallyLinearEmbedding(non_zero_threshold=self.non_zero_threshold)
+        self.embedding,self.diag,self.partialcorr,self.non_zero_matrix,self.non_zero_threshold = self.LocallyLinearEmbedding(LLE_n_neighbors=len(self.labels)-1,LLE_non_zero_threshold=0.02,LLE_n_components=2,LLE_eigen_solver='dense')
     
     def affinity_propagation(self,X,model,vervose=True):
         _, self.labels = sklearn.cluster.affinity_propagation(model.covariance_)
@@ -129,17 +128,27 @@ class MarkovGraph:
                 print('Cluster {0}: {1}'.format(i+1,self.names[self.labels==i]))
         return cluster
     
-    def LocallyLinearEmbedding(self,non_zero_threshold=0.02):
-        node_position_model = sklearn.manifold.LocallyLinearEmbedding(n_components=2, eigen_solver='dense', n_neighbors=len(self.labels)-1)
+    def LocallyLinearEmbedding(self,LLE_n_neighbors,LLE_non_zero_threshold,LLE_n_components,LLE_eigen_solver):
+        self.LLE_non_zero_threshold = LLE_non_zero_threshold
+        self.LLE_n_components=LLE_n_components
+        self.LLE_eigen_solver=LLE_eigen_solver
+        self.LLE_n_neighbors=LLE_n_neighbors
+        node_position_model = sklearn.manifold.LocallyLinearEmbedding(n_components=self.LLE_n_components, eigen_solver=self.LLE_eigen_solver, n_neighbors=self.LLE_n_neighbors)
         embedding = node_position_model.fit_transform(self.X.T).T
         d = 1./np.sqrt(np.diag(self.model.precision_))
         partialcorr = cov2partialcorr(self.model.covariance_)
-        non_zero = (np.abs(np.triu(partialcorr,k=1))>non_zero_threshold)
-        return embedding,d,partialcorr,non_zero,non_zero_threshold
+        non_zero = (np.abs(np.triu(partialcorr,k=1))>LLE_non_zero_threshold)
+        return embedding,d,partialcorr,non_zero,LLE_non_zero_threshold
 
-    def set_LocallyLinearEmbeddingThreshold(self,non_zero_threshold):
-        self.embedding,self.diag,self.partialcorr,self.non_zero_matrix,self.non_zero_threshold = self.LocallyLinearEmbedding(non_zero_threshold=non_zero_threshold)
+    def set_LocallyLinearEmbeddingThreshold(self,LLE_non_zero_threshold):
+        LLE_n_components=self.LLE_n_components
+        LLE_eigen_solver=self.LLE_eigen_solver
+        LLE_n_neighbors=self.LLE_n_neighbors
+        self.embedding,self.diag,self.partialcorr,self.non_zero_matrix,self.non_zero_threshold = self.LocallyLinearEmbedding(LLE_non_zero_threshold=LLE_non_zero_threshold,LLE_n_components=LLE_n_components,LLE_eigen_solver=LLE_eigen_solver,LLE_n_neighbors=LLE_n_neighbors)
     
+    def set_LocallyLinearEmbeddingParas(self,LLE_non_zero_threshold,LLE_n_components,LLE_eigen_solver,LLE_n_neighbors):
+        self.embedding,self.diag,self.partialcorr,self.non_zero_matrix,self.non_zero_threshold = self.LocallyLinearEmbedding(LLE_non_zero_threshold=LLE_non_zero_threshold,LLE_n_components=LLE_n_components,LLE_eigen_solver=LLE_eigen_solver,LLE_n_neighbors=LLE_n_neighbors)
+
     def set_node_position(self,pos):
         if set(pos.keys()) != set(self.names):
             print("List names do not match.")
