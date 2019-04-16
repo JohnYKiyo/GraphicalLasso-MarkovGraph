@@ -138,7 +138,7 @@ class MarkovGraph:
         return embedding,d,partialcorr,non_zero,non_zero_threshold
 
     def set_LocallyLinearEmbeddingThreshold(self,non_zero_threshold):
-        self.embedding,self.diag,self.non_zero_matrix,self.non_zero_threshold = self.LocallyLinearEmbedding(non_zero_threshold=non_zero_threshold)
+        self.embedding,self.diag,self.partialcorr,self.non_zero_matrix,self.non_zero_threshold = self.LocallyLinearEmbedding(non_zero_threshold=non_zero_threshold)
     
     def set_node_position(self,pos):
         if set(pos.keys()) != set(self.names):
