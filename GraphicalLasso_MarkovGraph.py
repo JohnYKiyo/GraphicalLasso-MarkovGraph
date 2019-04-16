@@ -19,62 +19,6 @@ def cov2partialcorr(cov):
     partialcorr+=2*np.eye(cov.shape[0])
     return partialcorr
 
-def GraphicalLasso(alpha=0.01,
-                   mode='cd',
-                   tol=0.0001,
-                   enet_tol=0.0001,
-                   max_iter=100, 
-                   verbose=False, 
-                   assume_centered=False):
-    """Sparse inverse covariance estimation with an l1-penalized estimator.
-    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
-    Parameters
-    ----------
-    alpha : positive float, default 0.01
-        The regularization parameter: the higher alpha, the more
-        regularization, the sparser the inverse covariance.
-    mode : {'cd', 'lars'}, default 'cd'
-        The Lasso solver to use: coordinate descent or LARS. Use LARS for
-        very sparse underlying graphs, where p > n. Elsewhere prefer cd
-        which is more numerically stable.
-    tol : positive float, default 1e-4
-        The tolerance to declare convergence: if the dual gap goes below
-        this value, iterations are stopped.
-    enet_tol : positive float, optional
-        The tolerance for the elastic net solver used to calculate the descent
-        direction. This parameter controls the accuracy of the search direction
-        for a given column update, not of the overall parameter estimate. Only
-        used for mode='cd'.
-    max_iter : integer, default 100
-        The maximum number of iterations.
-    verbose : boolean, default False
-        If verbose is True, the objective function and dual gap are
-        plotted at each iteration.
-    assume_centered : boolean, default False
-        If True, data are not centered before computation.
-        Useful when working with data whose mean is almost, but not exactly
-        zero.
-        If False, data are centered before computation.
-    Attributes
-    ----------
-    covariance_ : array-like, shape (n_features, n_features)
-        Estimated covariance matrix
-    precision_ : array-like, shape (n_features, n_features)
-        Estimated pseudo inverse matrix.
-    n_iter_ : int
-        Number of iterations run.
-    See Also
-    --------
-    graphical_lasso, GraphicalLassoCV"""
-    model = sklearn.covariance.GraphicalLasso(alpha=alpha, 
-                                              mode=mode, 
-                                              tol=tol, 
-                                              enet_tol=enet_tol, 
-                                              max_iter=max_iter, 
-                                              verbose=verbose, 
-                                              assume_centered=assume_centered)
-    return model
-
 def MinMaxNormalization(X,axis=0):
     if axis is None:
         Xmax = X.values.max()
@@ -108,7 +52,69 @@ def heatmap(val,**opt):
     """
     See also Seaborn==0.9.0
     """
-    return sns.heatmap(val,**opt,)
+    return sns.heatmap(val,**opt)
+
+class GraphicalLasso:
+    def __init__(self,data,alpha=0.01,mode='cd',tol=0.0001,enet_tol=0.0001,max_iter=100,verbose=False,assume_centered=False):
+        """Sparse inverse covariance estimation with an l1-penalized estimator.
+        Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+        Parameters
+        ----------
+        alpha : positive float, default 0.01
+            The regularization parameter: the higher alpha, the more
+            regularization, the sparser the inverse covariance.
+        mode : {'cd', 'lars'}, default 'cd'
+            The Lasso solver to use: coordinate descent or LARS. Use LARS for
+            very sparse underlying graphs, where p > n. Elsewhere prefer cd
+            which is more numerically stable.
+        tol : positive float, default 1e-4
+            The tolerance to declare convergence: if the dual gap goes below
+            this value, iterations are stopped.
+        enet_tol : positive float, optional
+            The tolerance for the elastic net solver used to calculate the descent
+            direction. This parameter controls the accuracy of the search direction
+            for a given column update, not of the overall parameter estimate. Only
+            used for mode='cd'.
+        max_iter : integer, default 100
+            The maximum number of iterations.
+        verbose : boolean, default False
+            If verbose is True, the objective function and dual gap are
+            plotted at each iteration.
+        assume_centered : boolean, default False
+            If True, data are not centered before computation.
+            Useful when working with data whose mean is almost, but not exactly
+            zero.
+            If False, data are centered before computation.
+        Attributes
+        ----------
+        covariance_ : array-like, shape (n_features, n_features)
+            Estimated covariance matrix
+        precision_ : array-like, shape (n_features, n_features)
+            Estimated pseudo inverse matrix.
+        n_iter_ : int
+            Number of iterations run.
+        See Also
+        --------
+        graphical_lasso, GraphicalLassoCV"""
+        self.model = sklearn.covariance.GraphicalLasso(alpha=alpha, 
+                                                       mode=mode, 
+                                                       tol=tol, 
+                                                       enet_tol=enet_tol, 
+                                                       max_iter=max_iter, 
+                                                       verbose=verbose, 
+                                                       assume_centered=assume_centered)
+      
+        self.data = data
+
+    def fit(self):
+        self.model.fit(self.data)
+        self.covariance_ = pd.DataFrame(self.model.covariance_,columns=self.data.columns,index=self.data.columns)
+        self.partial_correlation_ = pd.DataFrame(cov2partialcorr(self.model.covariance_),
+                                                 columns=self.data.columns,
+                                                 index=self.data.columns)
+        self.correlation_ = pd.DataFrame(cov2corr(self.model.covariance_),
+                                         columns=self.data.columns,
+                                         index=self.data.columns)
 
 class MarkovGraph:
     def __init__(self,X,model,vervose=True):
